@@ -1,0 +1,33 @@
+{
+  "name": "watchnest-server",
+  "version": "1.0.0",
+  "description": "This is the backend of the watchnest application which is a traking app for your entertainment-media like movies, anime and provides you with your own community",
+  "main": "app.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node -r tsconfig-paths/register --loader ts-node/esm src/app.ts",
+    "dev": "nodemon --watch src --ext ts --ignore node_modules --exec node -r tsconfig-paths/register --loader ts-node/esm src/app.ts",
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hemantsingh2004/watchnest-server.git"
+  },
+  "author": "Hemant Singh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hemantsingh2004/watchnest-server/issues"
+  },
+  "homepage": "https://github.com/hemantsingh2004/watchnest-server#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.5",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3"
+  }
+}
