@@ -76,9 +76,21 @@ WatchNest is a web application designed to track and list your favorite entertai
 
 A modular structure helps maintain clear separation of concerns:
 
-/watchnest-backend │ ├── src │ ├── config # Environment and configuration files │ ├── controllers # Route handlers │ ├── middlewares # Authentication, validation, error handling │ ├── models # Mongoose schemas (User, List, Item) │ ├── routes # Express route definitions │ ├── services # Business logic and external API calls (TMDB, Kitsu) │ └── utils # Helper functions and utilities │ ├── tests # Vitest test cases for routes, controllers, etc. │ ├── .env.example # Sample environment variables file ├── package.json # Project dependencies and scripts └── README.md # This file
-
----
+```plaintext
+/watchnest-backend
+  ├── src
+      ├── config            # Environment and configuration files
+      ├── controllers       # Route handlers
+      ├── middlewares       # Authentication, validation, error handling
+      ├── models            # Mongoose schemas (User, List, Item)
+      ├── routes            # Express route definitions
+      ├── services          # Business logic and external API calls (TMDB, Kitsu)
+      └── utils             # Helper functions and utilities
+  ├── tests                 # Vitest test cases for routes, controllers, etc.
+  ├── .env.example          # Sample environment variables file
+  ├── package.json          # Project dependencies and scripts
+  └── README.md             # This file
+```
 
 ---
 
@@ -186,25 +198,31 @@ _Note: With properly designed schemas (e.g., storing common media references and
    ```
 
 2. **Install Dependencies**
+   ```bash
    npm install
-
-   # or
-
+   or
    yarn install
-
-3. **Configure Environment Variables**
+   ```
+   
+4. **Configure Environment Variables**
    Create a `.env` file and define environment variables based on your configuration.
 
-4. **Start the Server**
+5. **Start the Server**
+   ```bash
    npm run dev
-   # or
+   or
    yarn dev
+   ```
+
+---
 
 ## Usage
 
 Use the provided endpoints to manage users, lists, and items.
 For testing the endpoints, consider using tools like Postman or Insomnia.
 Detailed API documentation is provided (or will be provided) to guide you through request/response formats and authentication flows.
+
+---
 
 ## Contributing
 
@@ -217,8 +235,12 @@ Push to the branch (git push origin feature/YourFeature).
 Open a pull request.
 Ensure your code adheres to our style guidelines and that all tests pass before submitting a pull request.
 
+---
+
 ## License
 
 This project is licensed under the MIT License.
+
+---
 
 ## Happy coding and thank you for contributing to WatchNest!
