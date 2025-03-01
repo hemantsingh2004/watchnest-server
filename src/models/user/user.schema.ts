@@ -5,8 +5,8 @@ interface IUser extends Document {
   username: string;
   email: string;
   password: string;
-  refreshToken: string;
   profileType: string;
+  refreshToken?: string;
   avatar?: string;
   list?: {
     statusBased: mongoose.Types.ObjectId[];
@@ -30,8 +30,8 @@ const UserSchema: Schema = new Schema(
     username: { type: String, unique: true, required: true },
     email: { type: String, unique: true, required: true },
     password: { type: String, required: true },
-    refreshToken: { type: String },
     profileType: { type: String, enum: ["public", "private"], required: true },
+    refreshToken: { type: String },
     avatar: { type: String }, // stores path to avatar image from backend folder
     list: {
       statusBased: [{ type: Schema.Types.ObjectId, ref: "List" }],
@@ -53,4 +53,6 @@ const UserSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.model<IUser>("User", UserSchema);
+const UserModel = mongoose.model<IUser>("User", UserSchema);
+export default UserModel;
+export type { IUser };
