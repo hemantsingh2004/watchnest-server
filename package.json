@@ -5,8 +5,8 @@
   "main": "app.ts",
   "type": "module",
   "scripts": {
-    "start": "node -r tsconfig-paths/register --loader ts-node/esm src/app.ts",
-    "dev": "nodemon --watch src --ext ts --ignore node_modules --exec node -r tsconfig-paths/register --loader ts-node/esm src/app.ts",
+    "start": "node -r tsconfig-paths/register --loader ts-node/esm app.ts",
+    "dev": "nodemon --watch src --ext ts --ignore node_modules --exec node -r tsconfig-paths/register --loader ts-node/esm app.ts",
     "test": "vitest"
   },
   "repository": {
@@ -21,10 +21,20 @@
   "homepage": "https://github.com/hemantsingh2004/watchnest-server#readme",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.11.0",
+    "morgan": "^1.10.0",
+    "redis": "^4.7.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/morgan": "^1.9.9",
     "@types/node": "^22.13.5",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
