@@ -38,8 +38,10 @@ if (process.env.NODE_ENV !== "production") {
 // API router
 import UserRouter from "./src/routers/user.router.ts";
 import ListRouter from "./src/routers/list.router.ts";
+import AuthRouter from "./src/routers/auth.router.ts";
 
 // Register routes before error handlers
+app.use("/v1/auth", AuthRouter);
 app.use("/v1/user", UserRouter);
 app.use("/v1/list", ListRouter);
 
@@ -61,3 +63,5 @@ app.use(
 
 // Start the server
 app.listen(port, () => console.log(`API is ready on http://localhost:${port}`));
+
+export default app;

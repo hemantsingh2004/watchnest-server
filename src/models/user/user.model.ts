@@ -64,7 +64,6 @@ const loginUser = (userObj: ILoginUser) => {
   });
 };
 
-//Requires Authorization
 const findUser = (userId: mongoose.Types.ObjectId) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -83,6 +82,21 @@ const searchByName = (name: string) => {
     try {
       const result = await userModel.find({
         name: { $regex: name, $options: "i" },
+        profileType: "public",
+      });
+      resolve(result);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+//Requires Authorization
+const searchByUserName = (username: string) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const result = await userModel.find({
+        username,
       });
       resolve(result);
     } catch (error) {
@@ -108,6 +122,15 @@ const updateProfileType = (userId: mongoose.Types.ObjectId, type: string) => {
 };
 
 // todo : remove and add tags, but that also needs to be removed from items as well
+// todo : remove and add friends as well
+// todo : remove and add collaborative lists
 
-export { createUser, loginUser, findUser, searchByName, updateProfileType };
+export {
+  createUser,
+  loginUser,
+  findUser,
+  searchByName,
+  searchByUserName,
+  updateProfileType,
+};
 export type { ILoginUser };

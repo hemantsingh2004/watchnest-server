@@ -21,14 +21,16 @@ WatchNest is a web application designed to track and list your favorite entertai
 ## Features
 
 - **Authentication & Authorization**
+
   - JWT-based authentication.
   - Access tokens stored in Redis for fast session validation.
   - Refresh tokens stored in MongoDB for persistent authentication.
+
 - **User Management**
 
   - Supports both public and private users.
   - **Public Users:** Can be searched by name, followed by others, and can create private, public, or collaborative lists.
-  - **Private Users:** Accessible only via user ID and upon approval; can create private, sharable, or collaborative lists.
+  - **Private Users:** Accessible only via username and upon approval; can create private, sharable, or collaborative lists.
   - Custom tags for users to organize their content.
 
 - **List & Item Management**
@@ -48,6 +50,7 @@ WatchNest is a web application designed to track and list your favorite entertai
 
   - **TMDB:** For fetching movie and series data.
   - **Kitsu:** For fetching anime data.
+  - **OMDB:** For fetching through IMDB Id.
 
 - **Real-Time Collaboration**
 
@@ -79,15 +82,15 @@ A modular structure helps maintain clear separation of concerns:
 ```plaintext
 /watchnest-backend
   ├── src
-      ├── config            # Environment and configuration files
-      ├── controllers       # Route handlers
-      ├── middlewares       # Authentication, validation, error handling
+      ├── @types            # Custom typescript definitions
+      ├── helpers           # Helper functions
+      ├── middlewares       # Authentication, validation, etc.
       ├── models            # Mongoose schemas (User, List, Item)
-      ├── routes            # Express route definitions
+      ├── routers           # Express route definitions
       ├── services          # Business logic and external API calls (TMDB, Kitsu)
       └── utils             # Helper functions and utilities
   ├── tests                 # Vitest test cases for routes, controllers, etc.
-  ├── .env.example          # Sample environment variables file
+  ├── app.ts                # Main entry point
   ├── package.json          # Project dependencies and scripts
   └── README.md             # This file
 ```
@@ -109,10 +112,15 @@ A modular structure helps maintain clear separation of concerns:
 
 ### User Routes
 
+All the User Routes require authorization except fething user by mongoose objectID.
+
 - **GET** `/users/:id`  
   Retrieve user details (private details require proper authorization).
 
-- **GET** `/users/search`  
+- **GET** `/users/search/:query?type=username`
+  Search for public users by username.
+
+- **GET** `/users/search/:query?type=name`
   Search for public users by name.
 
 - **PUT** `/users/:id`  
@@ -203,11 +211,10 @@ _Note: With properly designed schemas (e.g., storing common media references and
    or
    yarn install
    ```
-   
-4. **Configure Environment Variables**
+3. **Configure Environment Variables**
    Create a `.env` file and define environment variables based on your configuration.
 
-5. **Start the Server**
+4. **Start the Server**
    ```bash
    npm run dev
    or
