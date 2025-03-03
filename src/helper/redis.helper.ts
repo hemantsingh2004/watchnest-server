@@ -24,7 +24,7 @@ const disconnectRedis = async () => {
 
 const setJWT = async (key: string, value: string) => {
   try {
-    const res = await client.set(key, value, { EX: 60 * 60 });
+    const res = await client.set(key, value, { EX: 60 * 60 }); // 1 hour
     return res;
   } catch (err) {
     throw err;
