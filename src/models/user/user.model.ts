@@ -48,8 +48,8 @@ const loginUser = (userObj: ILoginUser) => {
           const accessToken = await createAccessJWT({ _id: user._id });
 
           if (refreshToken && accessToken) {
-            await setJWT(accessToken, refreshToken);
-            await user.updateOne({ refreshToken });
+            await setJWT(accessToken, String(user._id));
+            await user.updateOne({ $set: { refreshToken } });
             resolve({ message: "Login successful", accessToken, refreshToken });
           } else {
             reject(new Error("Unable to create token"));
@@ -110,3 +110,4 @@ const updateProfileType = (userId: mongoose.Types.ObjectId, type: string) => {
 // todo : remove and add tags, but that also needs to be removed from items as well
 
 export { createUser, loginUser, findUser, searchByName, updateProfileType };
+export type { ILoginUser };

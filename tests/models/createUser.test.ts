@@ -3,8 +3,6 @@ import { createUser } from "../../src/models/user/user.model.ts";
 import userModel, { IUser } from "../../src/models/user/user.schema.ts";
 import { hashPassword } from "../../src/helper/bcrypt.helper.ts";
 
-//These Test are incomplete and have problems
-
 vi.mock("../../src/models/user/user.schema.ts", () => ({
   default: {
     findOne: vi.fn(),
@@ -13,11 +11,11 @@ vi.mock("../../src/models/user/user.schema.ts", () => ({
 }));
 vi.mock("../../src/helper/bcrypt.helper.ts");
 
-const userObj = {
-  username: "existingUser",
+const userCreationObj = {
+  username: "hemantSingh",
   password: "password123",
   name: "Hemant Singh",
-  email: "hemant@one.come",
+  email: "hemant@one.com",
   profileType: "private",
 } as IUser;
 
@@ -25,12 +23,12 @@ describe("createUser", () => {
   it("should reject when username already exists", async () => {
     (userModel.findOne as Mock).mockResolvedValueOnce({ _id: "existingId" });
     try {
-      await createUser(userObj);
+      await createUser(userCreationObj);
     } catch (error) {
       expect(error.message).toBe("username already exists");
     }
     expect(userModel.findOne).toHaveBeenCalledWith({
-      username: "existingUser",
+      username: "hemantSingh",
     });
   });
 
@@ -38,16 +36,21 @@ describe("createUser", () => {
     (userModel.findOne as Mock).mockResolvedValueOnce(null);
     (hashPassword as Mock).mockResolvedValueOnce("hashedPassword123");
     (userModel.create as Mock).mockResolvedValueOnce({
-      _id: "newUserId",
-      username: "newUser",
+      ...userCreationObj,
+      _id: "someNewId",
+      password: "hashPassword123",
     });
-    const result = await createUser(userObj);
+    const result = await createUser(userCreationObj);
 
-    expect(result).toEqual({ _id: "newUserId", username: "newUser" });
-    expect(userModel.findOne).toHaveBeenCalledWith({ username: "newUser" });
+    expect(result).toEqual({
+      ...userCreationObj,
+      _id: "someNewId",
+      password: "hashPassword123",
+    });
+    expect(userModel.findOne).toHaveBeenCalledWith({ username: "hemantSingh" });
     expect(hashPassword).toHaveBeenCalledWith("password123");
     expect(userModel.create).toHaveBeenCalledWith({
-      ...userObj,
+      ...userCreationObj,
       password: "hashedPassword123",
     });
   });
@@ -58,15 +61,15 @@ describe("createUser", () => {
     (userModel.create as Mock).mockResolvedValueOnce(null);
 
     try {
-      await createUser(userObj);
+      await createUser(userCreationObj);
     } catch (error) {
       expect(error.message).toBe("Unable to create user");
     }
 
-    expect(userModel.findOne).toHaveBeenCalledWith({ username: "newUser" });
+    expect(userModel.findOne).toHaveBeenCalledWith({ username: "hemantSingh" });
     expect(hashPassword).toHaveBeenCalledWith("password123");
     expect(userModel.create).toHaveBeenCalledWith({
-      ...userObj,
+      ...userCreationObj,
       password: "hashedPassword123",
     });
   });
@@ -77,11 +80,11 @@ describe("createUser", () => {
     );
 
     try {
-      await createUser(userObj);
+      await createUser(userCreationObj);
     } catch (error) {
       expect(error.message).toBe("Database error");
     }
 
-    expect(userModel.findOne).toHaveBeenCalledWith({ username: "newUser" });
+    expect(userModel.findOne).toHaveBeenCalledWith({ username: "hemantSingh" });
   });
 });

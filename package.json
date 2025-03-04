@@ -29,9 +29,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.11.0",
     "morgan": "^1.10.0",
-    "redis": "^4.7.0",
-    "supertest": "^7.0.0",
-    "vitest": "^3.0.7"
+    "redis": "^4.7.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -40,8 +38,10 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.13.5",
+    "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
   }
 }
