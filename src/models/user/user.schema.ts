@@ -13,6 +13,7 @@ interface IUser extends Document {
     themeBased: mongoose.Types.ObjectId[];
   };
   tags?: string[];
+  friendRequests?: mongoose.Types.ObjectId[];
   friends?: mongoose.Types.ObjectId[];
   sharedLists?: [
     {
@@ -38,6 +39,7 @@ const UserSchema: Schema = new Schema(
       themeBased: [{ type: Schema.Types.ObjectId, ref: "List" }],
     },
     tags: [{ type: String }],
+    friendRequests: [{ type: Schema.Types.ObjectId, ref: "User" }],
     friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
     sharedLists: [
       {

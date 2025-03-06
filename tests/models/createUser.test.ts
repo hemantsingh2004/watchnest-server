@@ -20,8 +20,11 @@ const userCreationObj = {
 } as IUser;
 
 describe("createUser", () => {
+  const mockFindOne = userModel.findOne as Mock;
+  const mockHashPassword = hashPassword as Mock;
+  const mockCreate = userModel.create as Mock;
   it("should reject when username already exists", async () => {
-    (userModel.findOne as Mock).mockResolvedValueOnce({ _id: "existingId" });
+    mockFindOne.mockResolvedValueOnce({ _id: "existingId" });
     try {
       await createUser(userCreationObj);
     } catch (error) {
@@ -33,9 +36,9 @@ describe("createUser", () => {
   });
 
   it("should create a new user successfully", async () => {
-    (userModel.findOne as Mock).mockResolvedValueOnce(null);
-    (hashPassword as Mock).mockResolvedValueOnce("hashedPassword123");
-    (userModel.create as Mock).mockResolvedValueOnce({
+    mockFindOne.mockResolvedValueOnce(null);
+    mockHashPassword.mockResolvedValueOnce("hashedPassword123");
+    mockCreate.mockResolvedValueOnce({
       ...userCreationObj,
       _id: "someNewId",
       password: "hashPassword123",
@@ -56,9 +59,9 @@ describe("createUser", () => {
   });
 
   it("should reject if createUser fails to create a user", async () => {
-    (userModel.findOne as Mock).mockResolvedValueOnce(null);
-    (hashPassword as Mock).mockResolvedValueOnce("hashedPassword123");
-    (userModel.create as Mock).mockResolvedValueOnce(null);
+    mockFindOne.mockResolvedValueOnce(null);
+    mockHashPassword.mockResolvedValueOnce("hashedPassword123");
+    mockCreate.mockResolvedValueOnce(null);
 
     try {
       await createUser(userCreationObj);
@@ -75,9 +78,7 @@ describe("createUser", () => {
   });
 
   it("should reject on error during execution", async () => {
-    (userModel.findOne as Mock).mockRejectedValueOnce(
-      new Error("Database error")
-    );
+    mockFindOne.mockRejectedValueOnce(new Error("Database error"));
 
     try {
       await createUser(userCreationObj);

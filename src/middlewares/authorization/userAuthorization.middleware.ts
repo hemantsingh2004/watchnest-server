@@ -1,4 +1,3 @@
-import { verify } from "crypto";
 import { Response, Request, NextFunction } from "express";
 import { verifyAccessJWT } from "../../helper/jwt.helper";
 import { getJWT } from "../../helper/redis.helper";
@@ -7,28 +6,32 @@ const userAuthorization = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+): Promise<void> => {
+  const token = req.header("Authorization")?.replace("Bearer ", "") as string;
 
   if (!token) {
-    return res.status(403).json({ message: "Access denied, token missing." });
+    const err = new Error("Access denied, token missing.") as Error & {
+      status: number;
+    };
+    err.status = 403;
+    return next(err);
   }
 
   try {
     const isValid = await verifyAccessJWT(token);
     if (isValid) {
       const userId = await getJWT(token);
-      if (userId) req.userId = userId;
-      else
-        return res
-          .status(400)
-          .json({ message: "Invalid token. User does not exist" });
+      if (userId) {
+        req.userId = userId;
+        next();
+      } else {
+        res.status(400).json({ message: "Invalid token. User does not exist" });
+      }
     } else {
-      return res.status(400).json({ message: "Invalid token." });
+      res.status(400).json({ message: "Invalid token." });
     }
-    next();
   } catch (err) {
-    return res.status(400).json({ message: "Invalid or expired token." });
+    return next(err);
   }
 };
 
