@@ -1,15 +1,15 @@
 import { it, describe, expect, vi, Mock } from "vitest";
-import { createUser } from "../../src/models/user/user.model.ts";
-import userModel, { IUser } from "../../src/models/user/user.schema.ts";
-import { hashPassword } from "../../src/helper/bcrypt.helper.ts";
+import { createUser } from "../../../src/models/user/user.model.ts";
+import userModel, { IUser } from "../../../src/models/user/user.schema.ts";
+import { hashPassword } from "../../../src/helper/bcrypt.helper.ts";
 
-vi.mock("../../src/models/user/user.schema.ts", () => ({
+vi.mock("../../../src/models/user/user.schema.ts", () => ({
   default: {
     findOne: vi.fn(),
     create: vi.fn(),
   },
 }));
-vi.mock("../../src/helper/bcrypt.helper.ts");
+vi.mock("../../../src/helper/bcrypt.helper.ts");
 
 const userCreationObj = {
   username: "hemantSingh",
