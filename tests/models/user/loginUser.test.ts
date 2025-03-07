@@ -1,20 +1,23 @@
 import { it, describe, expect, vi, Mock } from "vitest";
-import { loginUser, ILoginUser } from "../../src/models/user/user.model";
-import UserModel from "../../src/models/user/user.schema";
-import { comparePassword } from "../../src/helper/bcrypt.helper";
-import { createRefreshJWT, createAccessJWT } from "../../src/helper/jwt.helper";
-import { setJWT } from "../../src/helper/redis.helper";
+import { loginUser, ILoginUser } from "../../../src/models/user/user.model";
+import UserModel from "../../../src/models/user/user.schema";
+import { comparePassword } from "../../../src/helper/bcrypt.helper";
+import {
+  createRefreshJWT,
+  createAccessJWT,
+} from "../../../src/helper/jwt.helper";
+import { setJWT } from "../../../src/helper/redis.helper";
 
-vi.mock("../../src/models/user/user.schema.ts", () => ({
+vi.mock("../../../src/models/user/user.schema.ts", () => ({
   default: {
     findOne: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnThis(), // Mocking the `select` method to allow chaining
     }),
   },
 }));
-vi.mock("../../src/helper/bcrypt.helper.ts");
-vi.mock("../../src/helper/jwt.helper.ts");
-vi.mock("../../src/helper/redis.helper.ts");
+vi.mock("../../../src/helper/bcrypt.helper.ts");
+vi.mock("../../../src/helper/jwt.helper.ts");
+vi.mock("../../../src/helper/redis.helper.ts");
 
 const userLoginObj: ILoginUser = {
   email: "hemant@one.com",

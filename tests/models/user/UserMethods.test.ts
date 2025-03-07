@@ -5,10 +5,10 @@ import {
   searchByName,
   searchByUserName,
   updateProfileType,
-} from "../../src/models/user/user.model";
-import userModel from "../../src/models/user/user.schema";
+} from "../../../src/models/user/user.model";
+import userModel from "../../../src/models/user/user.schema";
 
-vi.mock("../../src/models/user/user.schema.ts", () => ({
+vi.mock("../../../src/models/user/user.schema.ts", () => ({
   default: {
     findById: vi.fn(),
     find: vi.fn(),
