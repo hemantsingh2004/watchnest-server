@@ -1,7 +1,11 @@
 import { it, describe, vi, expect, Mock } from "vitest";
 import mongoose from "mongoose";
-import userModel from "../../../src/models/user/user.schema.ts";
-import { addList, getLists } from "../../../src/models/user/user.model.ts";
+import userModel, { IUser } from "../../../src/models/user/user.schema.ts";
+import {
+  addList,
+  getAllLists,
+  removeList,
+} from "../../../src/models/user/user.model.ts";
 
 vi.mock("../../../src/models/user/user.schema.ts", () => ({
   default: {
@@ -11,47 +15,6 @@ vi.mock("../../../src/models/user/user.schema.ts", () => ({
     findOneAndUpdate: vi.fn(),
   },
 }));
-
-describe("addList", () => {
-  it("should add list successfully", async () => {
-    const mockUserId = new mongoose.Types.ObjectId();
-    const mockListId = new mongoose.Types.ObjectId();
-    const mockResult = { _id: mockUserId, list: { statusBased: [mockListId] } };
-
-    (userModel.findOneAndUpdate as Mock).mockResolvedValue(mockResult);
-
-    const result = await addList(mockUserId, mockListId);
-    expect(result).toEqual(mockResult);
-    expect(userModel.findOneAndUpdate).toHaveBeenCalledWith({
-      _id: mockUserId,
-      $push: { list: mockListId },
-      new: true,
-    });
-  });
-
-  it("should fail if adding list fails", async () => {
-    const mockUserId = new mongoose.Types.ObjectId();
-    const mockListId = new mongoose.Types.ObjectId();
-
-    (userModel.findOneAndUpdate as Mock).mockRejectedValue(
-      new Error("Unable to add list")
-    );
-    await expect(addList(mockUserId, mockListId)).rejects.toThrow(
-      "Unable to add list"
-    );
-  });
-
-  it("should fail if findOneAndUpdate fails", async () => {
-    const mockUserId = new mongoose.Types.ObjectId();
-    const mockListId = new mongoose.Types.ObjectId();
-
-    (userModel.findOneAndUpdate as Mock).mockResolvedValue(null);
-
-    await expect(addList(mockUserId, mockListId)).rejects.toThrow(
-      "Unable to add list"
-    );
-  });
-});
 
 describe("getLists", () => {
   it("should return lists successfully", async () => {
@@ -64,7 +27,7 @@ describe("getLists", () => {
       select: vi.fn().mockResolvedValue(mockResult),
     });
 
-    const result = await getLists(mockUserId);
+    const result = await getAllLists(mockUserId);
     expect(result).toEqual(mockResult);
     expect(userModel.findById).toHaveBeenCalledWith(mockUserId);
     expect(userModel.findById(mockUserId).select).toHaveBeenCalledWith("list");
@@ -77,7 +40,9 @@ describe("getLists", () => {
       new Error("Unable to get lists")
     );
 
-    await expect(getLists(mockUserId)).rejects.toThrow("Unable to get lists");
+    await expect(getAllLists(mockUserId)).rejects.toThrow(
+      "Unable to get lists"
+    );
   });
 
   it("should fail if no lists are found", async () => {
@@ -85,6 +50,82 @@ describe("getLists", () => {
 
     (userModel.findById(mockUserId).select as Mock).mockResolvedValue(null);
 
-    await expect(getLists(mockUserId)).rejects.toThrow("Unable to get lists");
+    await expect(getAllLists(mockUserId)).rejects.toThrow(
+      "Unable to get lists"
+    );
+  });
+});
+
+describe("addList", () => {
+  const userId = new mongoose.Types.ObjectId();
+  const listId = new mongoose.Types.ObjectId();
+
+  it("should add a list successfully", async () => {
+    (userModel.findOneAndUpdate as Mock).mockResolvedValueOnce({
+      _id: userId,
+      list: { statusBased: [listId] },
+    });
+
+    const result = (await addList(userId, listId, "statusBased")) as IUser;
+    expect(result).toHaveProperty("list.statusBased");
+    expect(result.list && result.list.statusBased).toContain(listId);
+  });
+
+  it("should reject when an invalid list type is passed", async () => {
+    const promise = addList(userId, listId, "invalidType");
+    await expect(promise).rejects.toThrow("Invalid list type");
+  });
+
+  it("should reject when unable to add a list", async () => {
+    (userModel.findOneAndUpdate as Mock).mockResolvedValue(null);
+
+    const promise = addList(userId, listId, "statusBased");
+    await expect(promise).rejects.toThrow("Unable to add list");
+  });
+
+  it("should catch errors thrown during findOneAndUpdate", async () => {
+    (userModel.findOneAndUpdate as Mock).mockRejectedValue(
+      new Error("MongoDB error")
+    );
+
+    const promise = addList(userId, listId, "statusBased");
+    await expect(promise).rejects.toThrow("MongoDB error");
+  });
+});
+
+describe("removeList function", () => {
+  const userId = new mongoose.Types.ObjectId();
+  const listId = new mongoose.Types.ObjectId();
+
+  it("should remove a list successfully", async () => {
+    (userModel.findOneAndUpdate as Mock).mockResolvedValue({
+      _id: userId,
+      list: { statusBased: [] },
+    });
+
+    const result = (await removeList(userId, listId, "statusBased")) as IUser;
+    expect(result).toHaveProperty("list.statusBased");
+    expect(result.list && result.list.statusBased).not.toContain(listId);
+  });
+
+  it("should reject when an invalid list type is passed", async () => {
+    const promise = removeList(userId, listId, "invalidType");
+    await expect(promise).rejects.toThrow("Invalid list type");
+  });
+
+  it("should reject when unable to remove a list", async () => {
+    (userModel.findOneAndUpdate as Mock).mockResolvedValue(null);
+
+    const promise = removeList(userId, listId, "statusBased");
+    await expect(promise).rejects.toThrow("Unable to remove list");
+  });
+
+  it("should catch errors thrown during findOneAndUpdate", async () => {
+    (userModel.findOneAndUpdate as Mock).mockRejectedValue(
+      new Error("MongoDB error")
+    );
+
+    const promise = removeList(userId, listId, "statusBased");
+    await expect(promise).rejects.toThrow("MongoDB error");
   });
 });

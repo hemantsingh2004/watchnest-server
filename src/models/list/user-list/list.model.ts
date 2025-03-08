@@ -36,6 +36,30 @@ const updateListPrivacy = (
   });
 };
 
+const getList = (listId: mongoose.Types.ObjectId) => {
+  return new Promise(async (reject, resolve) => {
+    try {
+      const list = await listModel.findById(listId);
+      if (list) resolve(list);
+      else reject(new Error("List not found"));
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+const deleteList = (listId: mongoose.Types.ObjectId) => {
+  return new Promise(async (reject, resolve) => {
+    try {
+      const result = await listModel.findByIdAndDelete(listId);
+      if (result) resolve(true);
+      else reject(false);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 const addItems = (listId: mongoose.Types.ObjectId, items: IItem[]) => {
   return new Promise(async (reject, resolve) => {
     try {
@@ -131,6 +155,8 @@ const removeTag = (lists: mongoose.Types.ObjectId[], tag: string) => {
 
 export {
   createList,
+  getList,
+  deleteList,
   updateListPrivacy,
   addItems,
   removeItems,
