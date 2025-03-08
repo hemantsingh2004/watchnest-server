@@ -8,11 +8,11 @@ import {
   createList,
   getList,
   deleteList,
-  updateListPrivacy,
+  updateListDetails,
   addItems,
   removeItems,
   updateItem,
-  removeTag,
+  removeTagFromItems,
 } from "../../../src/models/list/user-list/list.model.ts";
 
 vi.mock("../../../src/models/list/user-list/list.schema.ts", () => ({
@@ -140,50 +140,78 @@ describe("deleteList function", () => {
   });
 });
 
-describe("updateListPrivacy", () => {
-  it("should update privacy successfully", async () => {
+describe("updateListDetails", () => {
+  it("should update list details successfully when updates are provided", async () => {
     const mockListId = new mongoose.Types.ObjectId();
-    const mockPrivacy = "private";
-    const mockResult = { _id: mockListId, privacy: mockPrivacy };
+    const mockUpdates = { name: "Updated List", privacy: "private" };
+    const mockResult = { _id: mockListId, ...mockUpdates };
 
     (listModel.findByIdAndUpdate as Mock).mockResolvedValueOnce(mockResult);
 
     try {
-      const result = await updateListPrivacy(mockListId, mockPrivacy);
+      const result = await updateListDetails({
+        listId: mockListId,
+        updates: mockUpdates,
+      });
       expect(result).toEqual(mockResult);
-    } catch (err) {}
+    } catch (err) {
+      // This should not trigger
+    }
     expect(listModel.findByIdAndUpdate).toHaveBeenCalledWith({
       _id: mockListId,
-      $set: { privacy: mockPrivacy },
+      $set: mockUpdates,
       new: true,
     });
   });
 
-  it("should throw an error if unable to update list privacy", async () => {
+  it("should update only the provided fields", async () => {
     const mockListId = new mongoose.Types.ObjectId();
-    const mockPrivacy = "private";
+    const mockUpdates = { privacy: "private" };
+    const mockResult = { _id: mockListId, privacy: "private" };
+
+    (listModel.findByIdAndUpdate as Mock).mockResolvedValueOnce(mockResult);
+
+    try {
+      const result = await updateListDetails({
+        listId: mockListId,
+        updates: mockUpdates,
+      });
+      expect(result).toEqual(mockResult);
+    } catch (err) {
+      // This should not trigger
+    }
+    expect(listModel.findByIdAndUpdate).toHaveBeenCalledWith({
+      _id: mockListId,
+      $set: { privacy: "private" },
+      new: true,
+    });
+  });
+
+  it("should throw an error if unable to update list details", async () => {
+    const mockListId = new mongoose.Types.ObjectId();
+    const mockUpdates = { name: "Updated List", privacy: "private" };
 
     (listModel.findByIdAndUpdate as Mock).mockResolvedValueOnce(null);
 
     try {
-      await updateListPrivacy(mockListId, mockPrivacy);
+      await updateListDetails({ listId: mockListId, updates: mockUpdates });
     } catch (error) {
-      expect(error).toEqual("Unable to update list privacy");
+      expect(error).toEqual(new Error("Unable to update list details"));
     }
   });
 
   it("should throw an error if update operation fails", async () => {
     const mockListId = new mongoose.Types.ObjectId();
-    const mockPrivacy = "private";
+    const mockUpdates = { name: "Updated List" };
 
     (listModel.findByIdAndUpdate as Mock).mockRejectedValueOnce(
       new Error("Database error")
     );
 
     try {
-      await updateListPrivacy(mockListId, mockPrivacy);
+      await updateListDetails({ listId: mockListId, updates: mockUpdates });
     } catch (error) {
-      expect(error).toEqual("Database error");
+      expect(error).toEqual(new Error("Database error"));
     }
   });
 });
@@ -370,7 +398,7 @@ describe("removeTag", () => {
 
     (listModel.updateMany as Mock).mockResolvedValueOnce(mockResult);
 
-    const result = await removeTag(mockLists, mockTag);
+    const result = await removeTagFromItems(mockLists, mockTag);
     expect(result).toEqual(mockResult);
     expect(listModel.updateMany).toHaveBeenCalledWith(
       { _id: { $in: mockLists }, "items.tags": mockTag },
@@ -387,7 +415,7 @@ describe("removeTag", () => {
 
     (listModel.updateMany as Mock).mockResolvedValueOnce({ modifiedCount: 0 });
 
-    await expect(removeTag(mockLists, mockTag)).rejects.toThrow(
+    await expect(removeTagFromItems(mockLists, mockTag)).rejects.toThrow(
       "Unable to remove tag from lists"
     );
   });
@@ -403,7 +431,7 @@ describe("removeTag", () => {
       new Error("Database error")
     );
 
-    await expect(removeTag(mockLists, mockTag)).rejects.toThrow(
+    await expect(removeTagFromItems(mockLists, mockTag)).rejects.toThrow(
       "Database error"
     );
   });

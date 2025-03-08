@@ -23,6 +23,7 @@ const itemSchema = joi.object({
 });
 
 const listDetailsSchema = joi.object({
+  name: joi.string().min(3).max(100).required(),
   items: joi.array().items(itemSchema).optional(),
   privacy: joi.string().valid("public", "private").required(),
   type: joi.string().valid("statusBased", "themeBased").required(),
@@ -48,26 +49,78 @@ const commonListValidation = (
   res: Response,
   next: NextFunction
 ) => {
-  const schema = joi.object({
+  const commonListschema = joi.object({
     type: joi.string().valid("statusBased", "themeBased").required(),
     listId: joi
       .string()
       .pattern(/^[0-9a-fA-F]{24}$/)
       .required(),
   });
-  const { error } = schema.validate({
-    type: req.query.type,
-    listId: req.params.listId,
-  });
+  const { error } = commonListschema.validate(
+    {
+      type: req.query.type,
+      listId: req.params.listId,
+    },
+    { abortEarly: false }
+  );
   if (error) {
-    return next(
+    const err = Object.assign(
       new Error(
         `Validation failed: ${error.details.map((x) => x.message).join(", ")}`
-      )
+      ),
+      { status: 400 }
     );
+    return next(err);
   } else {
     next();
   }
 };
 
-export { createlistValidation, commonListValidation };
+const updateListValidation = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const listUpdateSchema = joi.object({
+    listId: joi
+      .string()
+      .pattern(/^[0-9a-fA-F]{24}$/)
+      .required(),
+    updateType: joi.string().valid("privacy", "name").required(),
+    privacy: joi
+      .string()
+      .valid("public", "private")
+      .when("updateType", { is: "privacy", then: joi.required() })
+      .optional(),
+    name: joi
+      .string()
+      .min(3)
+      .max(100)
+      .when("updateType", { is: "name", then: joi.required() })
+      .optional(),
+  });
+
+  const { error } = listUpdateSchema.validate(
+    {
+      listId: req.params.listId,
+      updateType: req.query.updateType,
+      privacy: req.body.privacy,
+      name: req.body.name,
+    },
+    { abortEarly: false }
+  );
+
+  if (error) {
+    const err = Object.assign(
+      new Error(
+        `Validation failed: ${error.details.map((x) => x.message).join(", ")}`
+      ),
+      { status: 400 }
+    );
+    return next(err);
+  } else {
+    next();
+  }
+};
+
+export { createlistValidation, commonListValidation, updateListValidation };

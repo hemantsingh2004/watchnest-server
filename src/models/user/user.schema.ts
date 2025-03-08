@@ -1,3 +1,4 @@
+import { required } from "joi";
 import mongoose, { Schema, Document } from "mongoose";
 
 interface IUser extends Document {
@@ -13,6 +14,12 @@ interface IUser extends Document {
     themeBased: mongoose.Types.ObjectId[];
   };
   tags?: string[];
+  notifications?: [
+    {
+      type: string;
+      message: string;
+    }
+  ];
   friendRequests?: mongoose.Types.ObjectId[];
   friends?: mongoose.Types.ObjectId[];
   sharedLists?: [
@@ -39,6 +46,12 @@ const UserSchema: Schema = new Schema(
       themeBased: [{ type: Schema.Types.ObjectId, ref: "List" }],
     },
     tags: [{ type: String }],
+    notifications: [
+      {
+        type: { type: String, required: true },
+        message: { type: String, required: true },
+      },
+    ],
     friendRequests: [{ type: Schema.Types.ObjectId, ref: "User" }],
     friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
     sharedLists: [

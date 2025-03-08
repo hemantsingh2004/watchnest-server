@@ -17,19 +17,30 @@ const createList = (listObj: IListDetails) => {
   });
 };
 
-const updateListPrivacy = (
-  listId: mongoose.Types.ObjectId,
-  privacy: string
-) => {
+interface updateListDetailsParams {
+  listId: mongoose.Types.ObjectId;
+  updates: {
+    name?: string;
+    privacy?: string;
+  };
+}
+
+const updateListDetails = ({ listId, updates }: updateListDetailsParams) => {
   return new Promise(async (reject, resolve) => {
     try {
+      const updateFields: Record<string, any> = {};
+      if (updates.name) updateFields["name"] = updates.name;
+      if (updates.privacy) updateFields["privacy"] = updates.privacy;
       const newList = await listModel.findByIdAndUpdate({
         _id: listId,
-        $set: { privacy },
+        $set: updateFields,
         new: true,
       });
-      if (newList) resolve(newList);
-      reject(new Error("Unable to update list privacy"));
+      if (newList) {
+        resolve(newList);
+      } else {
+        reject(new Error("Unable to update list details"));
+      }
     } catch (error) {
       reject(error);
     }
@@ -135,7 +146,7 @@ const updateItem = ({ listId, mediaId, updates }: UpdateItemParams) => {
   });
 };
 
-const removeTag = (lists: mongoose.Types.ObjectId[], tag: string) => {
+const removeTagFromItems = (lists: mongoose.Types.ObjectId[], tag: string) => {
   return new Promise(async (resolve, reject) => {
     try {
       const result = await listModel.updateMany(
@@ -157,9 +168,9 @@ export {
   createList,
   getList,
   deleteList,
-  updateListPrivacy,
+  updateListDetails,
   addItems,
   removeItems,
   updateItem,
-  removeTag,
+  removeTagFromItems,
 };
