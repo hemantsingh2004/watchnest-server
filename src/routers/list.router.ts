@@ -188,8 +188,6 @@ router.put(
         });
         return next(err);
       }
-      console.log("some info in router: ", listId, userLists, userId);
-
       if (
         userLists.statusBased &&
         !userLists.statusBased.some((id) =>
@@ -200,8 +198,6 @@ router.put(
           id.equals(new mongoose.Types.ObjectId(listId))
         )
       ) {
-        console.log("in the router lists don't match");
-
         const err = Object.assign(
           new Error("List does not exist in user lists"),
           { status: 400 }
@@ -215,7 +211,6 @@ router.put(
           ...(name && { name }),
         },
       })) as mongoose.Document;
-      console.log("result achieved in list router is : ", result);
       if (result && result._id) {
         res
           .status(200)

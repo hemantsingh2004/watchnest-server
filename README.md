@@ -111,7 +111,7 @@ A modular structure helps maintain clear separation of concerns:
 
 ### List Basic Routes
 
-- **GET** `/lists/:listId`  
+- **GET** `/lists/:listId?type=statusBased|themeBased`  
   Retrieve a specific list including its items and sublists.
 
 - **POST** `/lists`  
@@ -120,29 +120,29 @@ A modular structure helps maintain clear separation of concerns:
 - **PUT** `/lists/updatePrivacy/:listId`  
   Update list details or collaborative list settings.
 
-- **DELETE** `/lists/:listId`  
+- **DELETE** `/lists/:listId?type=statusBased|themeBased`  
   Delete an existing list.
 
 ### User Basic Routes
 
-- **GET** `/users/:id`  
-  Retrieve user details.
-
-- **GET** `/users/search/:query?type`
+- **GET** `/users/search/:query?type=name|username`
   Search for users, if type is name, then all the users whose profile is public will be returned.
   if type is username, then all the users whose profile is public or private will be returned.
 
 - **DELETE** `/users/`  
   Delete a user's account.
 
-- **PUT** `/users/update`  
+- **PUT** `/users/update?queryType=name|username|email|profileType`  
   Update user profile details like name, username, email or profileType.
 
 - **PUT** `/users/updatePassword`  
   Update user's password.
 
-- **PUT** `/users/tag`  
+- **PUT** `/users/tag?queryType=add|remove`  
   Add or remove tag to a user's profile.
+
+- **GET** `/users/tags`  
+  Get all tags of a user.
 
 ### Item Routes (Within a List)
 

@@ -16,7 +16,7 @@ vi.mock("../../../src/models/user/user.schema.ts", () => ({
   },
 }));
 
-describe("getLists", () => {
+describe("get user lists", () => {
   it("should return lists successfully", async () => {
     const mockUserId = new mongoose.Types.ObjectId();
     const mockResult = {

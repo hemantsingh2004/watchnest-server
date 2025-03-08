@@ -3,7 +3,7 @@ import listModel, { IListDetails } from "./list.schema.ts";
 import { IItem } from "../../item/item.schema.ts";
 
 const createList = (listObj: IListDetails) => {
-  return new Promise(async (reject, resolve) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const list = await listModel.create(listObj);
       if (list) {
@@ -26,7 +26,7 @@ interface updateListDetailsParams {
 }
 
 const updateListDetails = ({ listId, updates }: updateListDetailsParams) => {
-  return new Promise(async (reject, resolve) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const updateFields: Record<string, any> = {};
       if (updates.name) updateFields["name"] = updates.name;
@@ -48,7 +48,7 @@ const updateListDetails = ({ listId, updates }: updateListDetailsParams) => {
 };
 
 const getList = (listId: mongoose.Types.ObjectId) => {
-  return new Promise(async (reject, resolve) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const list = await listModel.findById(listId);
       if (list) resolve(list);
@@ -60,7 +60,7 @@ const getList = (listId: mongoose.Types.ObjectId) => {
 };
 
 const deleteList = (listId: mongoose.Types.ObjectId) => {
-  return new Promise(async (reject, resolve) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const result = await listModel.findByIdAndDelete(listId);
       if (result) resolve(true);
@@ -72,7 +72,7 @@ const deleteList = (listId: mongoose.Types.ObjectId) => {
 };
 
 const addItems = (listId: mongoose.Types.ObjectId, items: IItem[]) => {
-  return new Promise(async (reject, resolve) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const newList = await listModel.findByIdAndUpdate({
         _id: listId,
@@ -88,7 +88,7 @@ const addItems = (listId: mongoose.Types.ObjectId, items: IItem[]) => {
 };
 
 const removeItems = (listId: mongoose.Types.ObjectId, itemIdList: string[]) => {
-  return new Promise(async (reject, resolve) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const newList = await listModel.findByIdAndUpdate({
         _id: listId,
@@ -146,7 +146,16 @@ const updateItem = ({ listId, mediaId, updates }: UpdateItemParams) => {
   });
 };
 
-const removeTagFromItems = (lists: mongoose.Types.ObjectId[], tag: string) => {
+interface UpdateResult {
+  acknowledged: boolean;
+  matchedCount: number;
+  modifiedCount: number;
+}
+
+const removeTagFromItems = (
+  lists: mongoose.Types.ObjectId[],
+  tag: string
+): Promise<UpdateResult> => {
   return new Promise(async (resolve, reject) => {
     try {
       const result = await listModel.updateMany(

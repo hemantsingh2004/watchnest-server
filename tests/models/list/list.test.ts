@@ -53,7 +53,7 @@ describe("createList", () => {
     try {
       await createList(mockListObj);
     } catch (error) {
-      expect(error).toEqual("Database error");
+      expect(error.message).toEqual("Database error");
     }
   });
 });
@@ -253,7 +253,7 @@ describe("addItems", () => {
     try {
       await addItems(mockListId, mockItems);
     } catch (error) {
-      expect(error).toEqual("Unable to add items");
+      expect(error.message).toEqual("Unable to add items to the list");
     }
   });
 
@@ -267,7 +267,7 @@ describe("addItems", () => {
     try {
       await addItems(mockListId, mockItems);
     } catch (error) {
-      expect(error).toEqual("Database error");
+      expect(error.message).toEqual("Database error");
     }
   });
 });
@@ -300,7 +300,7 @@ describe("removeItems", () => {
     try {
       await removeItems(mockListId, mockItemIds);
     } catch (error) {
-      expect(error).toEqual("Unable to remove items");
+      expect(error.message).toEqual("Unable to remove items from the list");
     }
   });
 
@@ -315,7 +315,7 @@ describe("removeItems", () => {
     try {
       await removeItems(mockListId, mockItemIds);
     } catch (error) {
-      expect(error).toEqual("Database error");
+      expect(error.message).toEqual("Database error");
     }
   });
 });
