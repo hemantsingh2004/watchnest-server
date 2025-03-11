@@ -128,19 +128,16 @@ All the User Routes require authorization except fething user by mongoose object
 
 ### List Routes
 
-- **GET** `/lists`  
-  Retrieve lists (filterable by type, privacy, etc.).
-
-- **GET** `/lists/:id`  
+- **GET** `/lists/:listId`  
   Retrieve a specific list including its items and sublists.
 
 - **POST** `/lists`  
   Create a new list with properties like listType, listPrivacy, and shared user IDs.
 
-- **PUT** `/lists/:id`  
+- **PUT** `/lists/updatePrivacy/:listId`  
   Update list details or collaborative list settings.
 
-- **DELETE** `/lists/:id`  
+- **DELETE** `/lists/:listId`  
   Delete an existing list.
 
 ### Item Routes (Within a List)

@@ -6,6 +6,8 @@ import listModel, {
 import { IItem } from "../../../src/models/item/item.schema.ts";
 import {
   createList,
+  getList,
+  deleteList,
   updateListPrivacy,
   addItems,
   removeItems,
@@ -18,6 +20,8 @@ vi.mock("../../../src/models/list/user-list/list.schema.ts", () => ({
     create: vi.fn(),
     findByIdAndUpdate: vi.fn(),
     updateMany: vi.fn(),
+    findById: vi.fn(),
+    findByIdAndDelete: vi.fn(),
   },
 }));
 
@@ -51,6 +55,88 @@ describe("createList", () => {
     } catch (error) {
       expect(error).toEqual("Database error");
     }
+  });
+});
+
+describe("getList function", () => {
+  const listId = new mongoose.Types.ObjectId();
+
+  it("should resolve with list when a list is found", async () => {
+    const mockList = { _id: listId, name: "Test List" };
+    (listModel.findById as Mock).mockResolvedValue(mockList);
+
+    try {
+      const result = await getList(listId);
+      expect(result).toEqual(mockList);
+    } catch (error) {}
+
+    expect(listModel.findById).toHaveBeenCalledWith(listId);
+  });
+
+  it("should reject with error when list is not found", async () => {
+    (listModel.findById as Mock).mockResolvedValue(null);
+
+    try {
+      await getList(listId);
+    } catch (error) {
+      expect(error.message).toBe("List not found");
+    }
+
+    expect(listModel.findById).toHaveBeenCalledWith(listId);
+  });
+
+  it("should reject with error when an exception is thrown", async () => {
+    const mockError = new Error("Database error");
+    (listModel.findById as Mock).mockRejectedValue(mockError);
+
+    try {
+      await getList(listId);
+    } catch (error) {
+      expect(error).toBe(mockError);
+    }
+
+    expect(listModel.findById).toHaveBeenCalledWith(listId);
+  });
+});
+
+describe("deleteList function", () => {
+  const listId = new mongoose.Types.ObjectId();
+
+  it("should resolve with true when a list is deleted successfully", async () => {
+    const mockDeletedList = { _id: listId, name: "Test List" };
+    (listModel.findByIdAndDelete as Mock).mockResolvedValue(mockDeletedList);
+
+    try {
+      const result = await deleteList(listId);
+      expect(result).toBe(true);
+    } catch (error) {}
+
+    expect(listModel.findByIdAndDelete).toHaveBeenCalledWith(listId);
+  });
+
+  it("should reject with false when list is not found for deletion", async () => {
+    (listModel.findByIdAndDelete as Mock).mockResolvedValue(null);
+
+    try {
+      await deleteList(listId);
+    } catch (error) {
+      expect(error).toBe(false);
+    }
+
+    expect(listModel.findByIdAndDelete).toHaveBeenCalledWith(listId);
+  });
+
+  it("should reject with error when an exception is thrown during deletion", async () => {
+    const mockError = new Error("Database error");
+    (listModel.findByIdAndDelete as Mock).mockRejectedValue(mockError);
+
+    try {
+      await deleteList(listId);
+    } catch (error) {
+      expect(error).toBe(mockError);
+    }
+
+    expect(listModel.findByIdAndDelete).toHaveBeenCalledWith(listId);
   });
 });
 

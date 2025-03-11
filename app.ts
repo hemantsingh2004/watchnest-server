@@ -62,6 +62,10 @@ app.use(
 );
 
 // Start the server
-app.listen(port, () => console.log(`API is ready on http://localhost:${port}`));
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, () =>
+    console.log(`API is ready on http://localhost:${port}`)
+  );
+}
 
 export default app;
