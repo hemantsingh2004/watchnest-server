@@ -1,11 +1,6 @@
 import { it, describe, expect, vi, Mock } from "vitest";
 import mongoose from "mongoose";
-import {
-  findUser,
-  searchByName,
-  searchByUserName,
-  updateProfileType,
-} from "../../../src/models/user/user.model";
+import { findUser, searchUser } from "../../../src/models/user/user.model";
 import userModel from "../../../src/models/user/user.schema";
 
 vi.mock("../../../src/models/user/user.schema.ts", () => ({
@@ -50,87 +45,56 @@ describe("findUser", () => {
   });
 });
 
-describe("searchByName", () => {
+describe("searchUser", () => {
   it("should return error if database error", async () => {
-    (userModel.findOne as Mock).mockRejectedValueOnce(
-      new Error("Database error")
-    );
+    (userModel.find as Mock).mockRejectedValueOnce(new Error("Database error"));
 
     try {
-      await searchByName("Hemant");
+      await searchUser("Hemant", "name");
+    } catch (error) {
+      expect(error.message).toBe("Database error");
+    }
+
+    try {
+      await searchUser("Hemant", "username");
     } catch (error) {
       expect(error.message).toBe("Database error");
     }
   });
 
-  it("should return a list of users if found", async () => {
+  it("should return a list of users if found by name", async () => {
     const mockUsers = [
       { _id: new mongoose.Types.ObjectId(), name: "Hemant" },
       { _id: new mongoose.Types.ObjectId(), name: "John" },
     ];
+
     (userModel.find as Mock).mockResolvedValueOnce(mockUsers);
 
-    const result = await searchByName("Hemant");
+    const result = await searchUser("Hemant", "name");
     expect(result).toEqual(mockUsers);
     expect(userModel.find).toHaveBeenCalledWith({
       name: { $regex: "Hemant", $options: "i" },
       profileType: "public",
     });
   });
-});
 
-describe("searchByUsername", () => {
-  it("should return error if database error", async () => {
-    (userModel.find as Mock).mockRejectedValueOnce(new Error("Database error"));
-
-    try {
-      await searchByUserName("Hemant");
-    } catch (error) {
-      expect(error.message).toBe("Database error");
-    }
-  });
-
-  it("should return a user if found", async () => {
+  it("should return a user if found by username", async () => {
     const mockUser = { _id: new mongoose.Types.ObjectId(), username: "Hemant" };
+
     (userModel.find as Mock).mockResolvedValueOnce(mockUser);
 
-    const result = await searchByUserName("Hemant");
+    const result = await searchUser("Hemant", "username");
     expect(result).toEqual(mockUser);
     expect(userModel.find).toHaveBeenCalledWith({
       username: "Hemant",
     });
   });
-});
 
-describe("updateProfileType", () => {
-  it("should return error if database error", async () => {
-    const objectId = new mongoose.Types.ObjectId();
-    (userModel.findOneAndUpdate as Mock).mockRejectedValueOnce(
-      new Error("Database error")
-    );
-
+  it("should throw an error if type is invalid", async () => {
     try {
-      await updateProfileType(objectId, "private");
+      await searchUser("Hemant", "invalidType" as any);
     } catch (error) {
-      expect(error.message).toBe("Database error");
+      expect(error.message).toBe("Invalid type. Must be 'name' or 'username'.");
     }
-  });
-
-  it("should update profile type and return new user document", async () => {
-    const objectId = new mongoose.Types.ObjectId();
-    const mockUpdatedUser = {
-      _id: objectId,
-      profileType: "private",
-      name: "Hemant",
-    };
-    (userModel.findOneAndUpdate as Mock).mockResolvedValueOnce(mockUpdatedUser);
-
-    const result = await updateProfileType(objectId, "private");
-    expect(result).toEqual(mockUpdatedUser);
-    expect(userModel.findOneAndUpdate).toHaveBeenCalledWith(
-      { _id: objectId },
-      { $set: { profileType: "private" } },
-      { new: true }
-    );
   });
 });

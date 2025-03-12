@@ -2,10 +2,10 @@ import { it, describe, vi, expect, Mock } from "vitest";
 import mongoose from "mongoose";
 import userModel, { IUser } from "../../../src/models/user/user.schema.ts";
 import {
-  addList,
-  getAllLists,
-  removeList,
-} from "../../../src/models/user/user.model.ts";
+  addListToUser,
+  getUserLists,
+  removeListFromUser,
+} from "../../../src/models/user/userList.model.ts";
 
 vi.mock("../../../src/models/user/user.schema.ts", () => ({
   default: {
@@ -27,7 +27,7 @@ describe("getLists", () => {
       select: vi.fn().mockResolvedValue(mockResult),
     });
 
-    const result = await getAllLists(mockUserId);
+    const result = await getUserLists(mockUserId);
     expect(result).toEqual(mockResult);
     expect(userModel.findById).toHaveBeenCalledWith(mockUserId);
     expect(userModel.findById(mockUserId).select).toHaveBeenCalledWith("list");
@@ -40,7 +40,7 @@ describe("getLists", () => {
       new Error("Unable to get lists")
     );
 
-    await expect(getAllLists(mockUserId)).rejects.toThrow(
+    await expect(getUserLists(mockUserId)).rejects.toThrow(
       "Unable to get lists"
     );
   });
@@ -50,13 +50,13 @@ describe("getLists", () => {
 
     (userModel.findById(mockUserId).select as Mock).mockResolvedValue(null);
 
-    await expect(getAllLists(mockUserId)).rejects.toThrow(
+    await expect(getUserLists(mockUserId)).rejects.toThrow(
       "Unable to get lists"
     );
   });
 });
 
-describe("addList", () => {
+describe("Add list to user", () => {
   const userId = new mongoose.Types.ObjectId();
   const listId = new mongoose.Types.ObjectId();
 
@@ -66,20 +66,24 @@ describe("addList", () => {
       list: { statusBased: [listId] },
     });
 
-    const result = (await addList(userId, listId, "statusBased")) as IUser;
+    const result = (await addListToUser(
+      userId,
+      listId,
+      "statusBased"
+    )) as IUser;
     expect(result).toHaveProperty("list.statusBased");
     expect(result.list && result.list.statusBased).toContain(listId);
   });
 
   it("should reject when an invalid list type is passed", async () => {
-    const promise = addList(userId, listId, "invalidType");
+    const promise = addListToUser(userId, listId, "invalidType");
     await expect(promise).rejects.toThrow("Invalid list type");
   });
 
   it("should reject when unable to add a list", async () => {
     (userModel.findOneAndUpdate as Mock).mockResolvedValue(null);
 
-    const promise = addList(userId, listId, "statusBased");
+    const promise = addListToUser(userId, listId, "statusBased");
     await expect(promise).rejects.toThrow("Unable to add list");
   });
 
@@ -88,12 +92,12 @@ describe("addList", () => {
       new Error("MongoDB error")
     );
 
-    const promise = addList(userId, listId, "statusBased");
+    const promise = addListToUser(userId, listId, "statusBased");
     await expect(promise).rejects.toThrow("MongoDB error");
   });
 });
 
-describe("removeList function", () => {
+describe("Remove list from user", () => {
   const userId = new mongoose.Types.ObjectId();
   const listId = new mongoose.Types.ObjectId();
 
@@ -103,20 +107,24 @@ describe("removeList function", () => {
       list: { statusBased: [] },
     });
 
-    const result = (await removeList(userId, listId, "statusBased")) as IUser;
+    const result = (await removeListFromUser(
+      userId,
+      listId,
+      "statusBased"
+    )) as IUser;
     expect(result).toHaveProperty("list.statusBased");
     expect(result.list && result.list.statusBased).not.toContain(listId);
   });
 
   it("should reject when an invalid list type is passed", async () => {
-    const promise = removeList(userId, listId, "invalidType");
+    const promise = removeListFromUser(userId, listId, "invalidType");
     await expect(promise).rejects.toThrow("Invalid list type");
   });
 
   it("should reject when unable to remove a list", async () => {
     (userModel.findOneAndUpdate as Mock).mockResolvedValue(null);
 
-    const promise = removeList(userId, listId, "statusBased");
+    const promise = removeListFromUser(userId, listId, "statusBased");
     await expect(promise).rejects.toThrow("Unable to remove list");
   });
 
@@ -125,7 +133,7 @@ describe("removeList function", () => {
       new Error("MongoDB error")
     );
 
-    const promise = removeList(userId, listId, "statusBased");
+    const promise = removeListFromUser(userId, listId, "statusBased");
     await expect(promise).rejects.toThrow("MongoDB error");
   });
 });

@@ -15,16 +15,15 @@ const createUser = (userObj: IUser) => {
   return new Promise(async (resolve, reject) => {
     try {
       const existingUser = await userModel.findOne({
-        // check if username already exists
         username: userObj.username,
       });
       if (existingUser && existingUser._id)
         return reject(new Error("username already exists"));
 
-      const hashPass = await hashPassword(userObj.password); //Encrypting the password
+      const hashPass = await hashPassword(userObj.password);
       userObj.password = hashPass as string;
 
-      const newUser = await userModel.create(userObj); //creating new user
+      const newUser = await userModel.create(userObj);
       if (newUser && newUser._id) resolve(newUser);
 
       reject(new Error("Unable to create user"));
@@ -76,14 +75,23 @@ const findUser = (userId: mongoose.Types.ObjectId) => {
   });
 };
 
-//Requires Authorization
-const searchByName = (name: string) => {
+const searchUser = (query: string, type: "name" | "username") => {
   return new Promise(async (resolve, reject) => {
     try {
-      const result = await userModel.find({
-        name: { $regex: name, $options: "i" },
-        profileType: "public",
-      });
+      let findQuery;
+
+      if (type === "name") {
+        findQuery = {
+          name: { $regex: query, $options: "i" },
+          profileType: "public",
+        };
+      } else if (type === "username") {
+        findQuery = { username: query };
+      } else {
+        return reject(new Error("Invalid type. Must be 'name' or 'username'."));
+      }
+
+      const result = await userModel.find(findQuery);
       resolve(result);
     } catch (error) {
       reject(error);
@@ -91,132 +99,142 @@ const searchByName = (name: string) => {
   });
 };
 
-//Requires Authorization
-const searchByUserName = (username: string) => {
+const deleteUser = (userId: mongoose.Types.ObjectId, password: string) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const result = await userModel.find({
-        username,
-      });
-      resolve(result);
+      const hashPass = await userModel.findById(userId).select("password");
+      if (hashPass) {
+        const isValid = await comparePassword(password, hashPass.password);
+        if (isValid) {
+          const result = await userModel.findByIdAndDelete(userId);
+          if (result) resolve(result);
+          else reject(new Error("Unable to delete user"));
+        } else {
+          const err = Object.assign(new Error("Password is incorrect"), {
+            status: 400,
+          });
+          reject(err);
+        }
+      } else {
+        reject(new Error("User not found"));
+      }
     } catch (error) {
       reject(error);
     }
   });
 };
 
-//Requires Authorization
-const updateProfileType = (userId: mongoose.Types.ObjectId, type: string) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const result = await userModel.findOneAndUpdate(
-        { _id: userId },
-        { $set: { profileType: type } },
-        { new: true }
-      );
-      resolve(result);
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
+interface updateUserDetails {
+  userId: mongoose.Types.ObjectId;
+  updates: {
+    name?: string;
+    username?: string;
+    email?: string;
+    profileType?: string;
+  };
+}
 
-const findTag = (userId: mongoose.Types.ObjectId, tag: string) => {
-  return new Promise(async (resolve, reject) => {
+const updateUser = ({ userId, updates }: updateUserDetails) => {
+  return new Promise(async (reject, resolve) => {
     try {
-      const result = await userModel.find({ _id: userId, tags: tag });
-      if (result) resolve(result);
-      reject(new Error("Unable to find tag"));
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-
-const addTag = (userId: mongoose.Types.ObjectId, tag: string) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const result = await userModel.findOneAndUpdate({
+      const updateFields: Record<string, any> = {};
+      if (updates.name) updateFields["name"] = updates.name;
+      if (updates.profileType)
+        updateFields["profileType"] = updates.profileType;
+      if (updates.email) updateFields["email"] = updates.email;
+      if (updates.username) updateFields["username"] = updates.username;
+      const newList = await userModel.findByIdAndUpdate({
         _id: userId,
-        $push: { tags: tag },
+        $set: updateFields,
         new: true,
       });
-      if (result) resolve(result);
-      reject(new Error("Unable to add tag"));
+      if (newList) {
+        resolve(newList);
+      } else {
+        reject(new Error("Unable to update list details"));
+      }
     } catch (error) {
       reject(error);
     }
   });
 };
 
-const removeTag = (userId: mongoose.Types.ObjectId, tag: string) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const result = await userModel.findOneAndUpdate({
-        _id: userId,
-        $pull: { tags: tag },
-        new: true,
-      });
-      if (result) resolve(result);
-      reject(new Error("Unable to remove tag"));
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-
-const addList = (
+const updatePassword = (
   userId: mongoose.Types.ObjectId,
-  listId: mongoose.Types.ObjectId,
-  type: string
+  OldPassword: string,
+  newPassword: string
 ) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!["statusBased", "themeBased"].includes(type)) {
-        reject(new Error("Invalid list type"));
+      const hashPass = await userModel.findById(userId).select("password");
+      if (hashPass) {
+        const isValid = await comparePassword(OldPassword, hashPass.password);
+        if (isValid) {
+          const newPass = await hashPassword(newPassword);
+          if (newPass) {
+            const result = await userModel.updateOne(
+              { _id: userId },
+              { $set: { password: newPass } }
+            );
+            if (result) resolve(result);
+            reject(new Error("Unable to update password"));
+          }
+        } else {
+          const err = Object.assign(new Error("Old password is incorrect"), {
+            status: 400,
+          });
+          reject(err);
+        }
+      } else {
+        reject(new Error("Unable to update password"));
       }
-      const result = await userModel.findOneAndUpdate({
-        _id: userId,
-        $push: { [`list.${type}`]: listId },
-        new: true,
-      });
-      if (result) resolve(result);
-      else reject(new Error("Unable to add list"));
     } catch (error) {
       reject(error);
     }
   });
 };
 
-const getAllLists = (userId: mongoose.Types.ObjectId) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const result = await userModel.findById(userId).select("list");
-      if (result) resolve(result);
-      reject(new Error("Unable to get lists"));
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-
-const removeList = (
+const handleTag = (
   userId: mongoose.Types.ObjectId,
-  listId: mongoose.Types.ObjectId,
-  type: string
+  tag: string,
+  queryType: "find" | "add" | "remove"
 ) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!["statusBased", "themeBased"].includes(type)) {
-        reject(new Error("Invalid list type"));
+      let result;
+
+      switch (queryType) {
+        case "find":
+          result = await userModel.find({ _id: userId, tags: tag });
+          if (!result || result.length === 0) {
+            return reject(new Error("Unable to find tag"));
+          }
+          break;
+        case "add":
+          result = await userModel.findOneAndUpdate(
+            { _id: userId },
+            { $push: { tags: tag } },
+            { new: true }
+          );
+          if (!result) {
+            return reject(new Error("Unable to add tag"));
+          }
+          break;
+        case "remove":
+          result = await userModel.findOneAndUpdate(
+            { _id: userId },
+            { $pull: { tags: tag } },
+            { new: true }
+          );
+          if (!result) {
+            return reject(new Error("Unable to remove tag"));
+          }
+          break;
+        default:
+          return reject(new Error("Invalid query type"));
       }
-      const result = await userModel.findOneAndUpdate({
-        _id: userId,
-        $pull: { [`list.${type}`]: listId },
-        new: true,
-      });
-      if (result) resolve(result);
-      else reject(new Error("Unable to remove list"));
+
+      resolve(result);
     } catch (error) {
       reject(error);
     }
@@ -230,14 +248,10 @@ export {
   createUser,
   loginUser,
   findUser,
-  searchByName,
-  searchByUserName,
-  updateProfileType,
-  addList,
-  getAllLists,
-  removeList,
-  findTag,
-  addTag,
-  removeTag,
+  searchUser,
+  updateUser,
+  updatePassword,
+  deleteUser,
+  handleTag,
 };
 export type { ILoginUser };

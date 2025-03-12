@@ -1,4 +1,4 @@
-import joi, { LanguageMessages } from "joi";
+import joi from "joi";
 import { Response, Request, NextFunction } from "express";
 
 const createUserValidation = (

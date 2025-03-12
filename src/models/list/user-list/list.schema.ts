@@ -2,6 +2,7 @@ import mongoose, { Schema, Document, UpdateQuery } from "mongoose";
 import { IItem, ItemSchema } from "../../item/item.schema";
 
 interface IListDetails extends Document {
+  name: string;
   items?: IItem[];
   privacy: string;
   type: string;
@@ -10,6 +11,7 @@ interface IListDetails extends Document {
 }
 
 const ListDetailsSchema: Schema = new Schema({
+  name: { type: String, required: true },
   items: [ItemSchema],
   privacy: { type: String, enum: ["public", "private"], required: true },
   type: { type: String, enum: ["statusBased", "themeBased"], required: true },

@@ -6,19 +6,20 @@ import {
   createList,
   deleteList,
   getList,
-  updateListPrivacy,
+  updateListDetails,
 } from "../../src/models/list/user-list/list.model.ts";
 import {
-  addList,
-  getAllLists,
-  removeList,
-} from "../../src/models/user/user.model.ts";
+  addListToUser,
+  getUserLists,
+  removeListFromUser,
+} from "../../src/models/user/userList.model.ts";
 
 vi.mock("../../src/models/list/user-list/list.model.ts");
-vi.mock("../../src/models/user/user.model.ts");
+vi.mock("../../src/models/user/userList.model.ts");
 
 // Mock data for the test
 const validListObj = {
+  name: "My List",
   privacy: "public",
   type: "statusBased",
 };
@@ -44,7 +45,7 @@ vi.mock(
 describe("POST /v1/list", () => {
   it("should create a list and add it to the user successfully", async () => {
     (createList as Mock).mockResolvedValue(mockList);
-    (addList as Mock).mockResolvedValue(true);
+    (addListToUser as Mock).mockResolvedValue(true);
 
     const response = await request(app)
       .post("/v1/list")
@@ -58,7 +59,7 @@ describe("POST /v1/list", () => {
     );
     expect(response.body.result.type).toEqual(validListObj.type);
     expect(createList).toHaveBeenCalledWith(validListObj);
-    expect(addList).toHaveBeenCalledWith(
+    expect(addListToUser).toHaveBeenCalledWith(
       mockUserId,
       mockList._id,
       validListObj.type
@@ -80,7 +81,7 @@ describe("POST /v1/list", () => {
 
   it("should fail to add the list to the user and delete the list", async () => {
     (createList as Mock).mockResolvedValue(mockList);
-    (addList as Mock).mockResolvedValue(false);
+    (addListToUser as Mock).mockResolvedValue(false);
     (deleteList as Mock).mockResolvedValue(true);
 
     const response = await request(app)
@@ -91,7 +92,7 @@ describe("POST /v1/list", () => {
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("Unable to add list, please try again");
     expect(createList).toHaveBeenCalledWith(validListObj);
-    expect(addList).toHaveBeenCalledWith(
+    expect(addListToUser).toHaveBeenCalledWith(
       mockUserId,
       mockList._id,
       validListObj.type
@@ -119,7 +120,7 @@ describe("GET /v1/list/:listId", () => {
       statusBased: [mockListId],
       themeBased: [],
     };
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
     (getList as Mock).mockResolvedValue(mockList);
 
     const response = await request(app)
@@ -133,7 +134,7 @@ describe("GET /v1/list/:listId", () => {
       mockList._id.toString()
     );
     expect(response.body.result.type).toEqual(mockList.type);
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
     expect(getList).toHaveBeenCalledWith(mockListId);
   });
 
@@ -142,7 +143,7 @@ describe("GET /v1/list/:listId", () => {
       statusBased: [],
       themeBased: [mockListId],
     };
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
 
     const response = await request(app)
       .get(`/v1/list/${mockListId}`)
@@ -151,7 +152,7 @@ describe("GET /v1/list/:listId", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe("List does not exist in user lists");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
   });
 
   it("should return an error if retrieving the list fails", async () => {
@@ -160,7 +161,7 @@ describe("GET /v1/list/:listId", () => {
       themeBased: [],
     };
 
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
     (getList as Mock).mockResolvedValue(null);
 
     const response = await request(app)
@@ -170,12 +171,12 @@ describe("GET /v1/list/:listId", () => {
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("Unable to retrieve list");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
     expect(getList).toHaveBeenCalledWith(mockListId);
   });
 
   it("should handle an error during user lists retrieval", async () => {
-    (getAllLists as Mock).mockRejectedValue(
+    (getUserLists as Mock).mockRejectedValue(
       new Error("Unable to retrieve user lists")
     );
 
@@ -186,7 +187,7 @@ describe("GET /v1/list/:listId", () => {
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("Unable to retrieve user lists");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
   });
 
   it("should handle list removal if list not found", async () => {
@@ -195,9 +196,9 @@ describe("GET /v1/list/:listId", () => {
       themeBased: [],
     };
 
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
     (getList as Mock).mockRejectedValue(new Error("List not found"));
-    (removeList as Mock).mockResolvedValue(true);
+    (removeListFromUser as Mock).mockResolvedValue(true);
 
     const response = await request(app)
       .get(`/v1/list/${mockListId}`)
@@ -206,9 +207,9 @@ describe("GET /v1/list/:listId", () => {
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("List not found");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
     expect(getList).toHaveBeenCalledWith(mockListId);
-    expect(removeList).toHaveBeenCalledWith(
+    expect(removeListFromUser).toHaveBeenCalledWith(
       mockUserId,
       mockListId,
       "statusBased"
@@ -222,9 +223,9 @@ describe("DELETE /v1/list/:listId", () => {
       statusBased: [mockListId],
       themeBased: [],
     };
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
     (deleteList as Mock).mockResolvedValue(true);
-    (removeList as Mock).mockResolvedValue(true);
+    (removeListFromUser as Mock).mockResolvedValue(true);
 
     const response = await request(app)
       .delete(`/v1/list/${mockListId}`)
@@ -233,11 +234,11 @@ describe("DELETE /v1/list/:listId", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("List deleted successfully");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
     expect(deleteList).toHaveBeenCalledWith(
       new mongoose.Types.ObjectId(mockListId)
     );
-    expect(removeList).toHaveBeenCalledWith(
+    expect(removeListFromUser).toHaveBeenCalledWith(
       mockUserId,
       new mongoose.Types.ObjectId(mockListId),
       "statusBased"
@@ -249,7 +250,7 @@ describe("DELETE /v1/list/:listId", () => {
       statusBased: [],
       themeBased: [mockListId],
     };
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
 
     const response = await request(app)
       .delete(`/v1/list/${mockListId}`)
@@ -260,7 +261,7 @@ describe("DELETE /v1/list/:listId", () => {
     expect(response.body.message).toBe(
       "List does not exist in user statusBased lists"
     );
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
   });
 
   it("should return an error if unable to delete the list", async () => {
@@ -268,7 +269,7 @@ describe("DELETE /v1/list/:listId", () => {
       statusBased: [mockListId],
       themeBased: [],
     };
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
     (deleteList as Mock).mockResolvedValue(false);
 
     const response = await request(app)
@@ -278,7 +279,7 @@ describe("DELETE /v1/list/:listId", () => {
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("Unable to delete list");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
     expect(deleteList).toHaveBeenCalledWith(
       new mongoose.Types.ObjectId(mockListId)
     );
@@ -289,9 +290,9 @@ describe("DELETE /v1/list/:listId", () => {
       statusBased: [mockListId],
       themeBased: [],
     };
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
     (deleteList as Mock).mockResolvedValue(true);
-    (removeList as Mock).mockResolvedValue(false);
+    (removeListFromUser as Mock).mockResolvedValue(false);
 
     const response = await request(app)
       .delete(`/v1/list/${mockListId}`)
@@ -300,11 +301,11 @@ describe("DELETE /v1/list/:listId", () => {
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("Unable to remove list from user");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
     expect(deleteList).toHaveBeenCalledWith(
       new mongoose.Types.ObjectId(mockListId)
     );
-    expect(removeList).toHaveBeenCalledWith(
+    expect(removeListFromUser).toHaveBeenCalledWith(
       mockUserId,
       new mongoose.Types.ObjectId(mockListId),
       "statusBased"
@@ -312,7 +313,7 @@ describe("DELETE /v1/list/:listId", () => {
   });
 
   it("should handle an error during user lists retrieval", async () => {
-    (getAllLists as Mock).mockRejectedValue(
+    (getUserLists as Mock).mockRejectedValue(
       new Error("Unable to retrieve user lists")
     );
 
@@ -323,7 +324,7 @@ describe("DELETE /v1/list/:listId", () => {
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("Unable to retrieve user lists");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
   });
 
   it("should handle an error during list deletion", async () => {
@@ -332,7 +333,7 @@ describe("DELETE /v1/list/:listId", () => {
       themeBased: [],
     };
 
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
     (deleteList as Mock).mockRejectedValue(
       new Error("Delete operation failed")
     );
@@ -344,49 +345,56 @@ describe("DELETE /v1/list/:listId", () => {
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("Delete operation failed");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
   });
 });
 
-describe("PUT /v1/list/updatePrivacy/:listId", () => {
-  it("should update the list privacy successfully", async () => {
+describe("PUT /v1/list/update/:listId", () => {
+  it("should update list details successfully", async () => {
     const mockUserLists = {
       statusBased: [mockListId],
       themeBased: [],
     };
     const updatedPrivacy = "private";
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
-    (updateListPrivacy as Mock).mockResolvedValue({
-      ...mockList,
+    const updatedName = "Updated List Name";
+    const updatedResult = {
+      _id: mockListId,
       privacy: updatedPrivacy,
-    });
+      name: updatedName,
+    };
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
+    (updateListDetails as Mock).mockResolvedValue(updatedResult);
 
     const response = await request(app)
-      .put(`/v1/list/updatePrivacy/${mockListId}`)
+      .put(`/v1/list/update/${mockListId}`)
       .set("Authorization", `Bearer ${mockUserId}`)
-      .send({ privacy: updatedPrivacy });
+      .query({ updateType: "privacy" })
+      .send({ privacy: updatedPrivacy, name: updatedName });
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("List privacy updated successfully");
-    expect(response.body.result._id.toString()).toEqual(
-      mockList._id.toString()
-    );
+    expect(response.body.result._id.toString()).toEqual(mockListId.toString());
     expect(response.body.result.privacy).toEqual(updatedPrivacy);
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
-    expect(updateListPrivacy).toHaveBeenCalledWith(
-      new mongoose.Types.ObjectId(mockListId),
-      updatedPrivacy
-    );
+    expect(response.body.result.name).toEqual(updatedName);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
+    expect(updateListDetails).toHaveBeenCalledWith({
+      listId: new mongoose.Types.ObjectId(mockListId),
+      updates: {
+        privacy: updatedPrivacy,
+        name: updatedName,
+      },
+    });
   });
 
-  it("should return an error if listId or privacy is missing", async () => {
+  it("should return an error if listId or required body fields are missing", async () => {
     const response = await request(app)
-      .put(`/v1/list/updatePrivacy/${mockListId}`)
+      .put(`/v1/list/update/${mockListId}`)
       .set("Authorization", `Bearer ${mockUserId}`)
+      .query({ updateType: "name" })
       .send({});
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe("details not found");
+    expect(response.body.message).toContain("Validation failed");
   });
 
   it("should return an error if the list does not exist in user's lists", async () => {
@@ -394,69 +402,80 @@ describe("PUT /v1/list/updatePrivacy/:listId", () => {
       statusBased: [],
       themeBased: [],
     };
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
 
     const updatedPrivacy = "private";
+    const updatedName = "Updated List Name";
     const response = await request(app)
-      .put(`/v1/list/updatePrivacy/${mockListId}`)
+      .put(`/v1/list/update/${mockListId}`)
       .set("Authorization", `Bearer ${mockUserId}`)
-      .send({ privacy: updatedPrivacy });
+      .query({ updateType: "privacy" })
+      .send({ privacy: updatedPrivacy, name: updatedName });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe("List does not exist in user lists");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
   });
 
   it("should return an error if unable to retrieve user lists", async () => {
-    (getAllLists as Mock).mockRejectedValue(
+    (getUserLists as Mock).mockRejectedValue(
       new Error("Unable to retrieve lists")
     );
 
     const updatedPrivacy = "private";
+    const updatedName = "Updated List Name";
     const response = await request(app)
-      .put(`/v1/list/updatePrivacy/${mockListId}`)
+      .put(`/v1/list/update/${mockListId}`)
       .set("Authorization", `Bearer ${mockUserId}`)
-      .send({ privacy: updatedPrivacy });
+      .query({ updateType: "privacy" })
+      .send({ privacy: updatedPrivacy, name: updatedName });
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("Unable to retrieve lists");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
   });
 
-  it("should return an error if unable to update list privacy", async () => {
+  it("should return an error if unable to update list details", async () => {
     const mockUserLists = {
       statusBased: [mockListId],
       themeBased: [],
     };
     const updatedPrivacy = "private";
-    (getAllLists as Mock).mockResolvedValue(mockUserLists);
-    (updateListPrivacy as Mock).mockResolvedValue(null);
+    const updatedName = "Updated List Name";
+    (getUserLists as Mock).mockResolvedValue(mockUserLists);
+    (updateListDetails as Mock).mockResolvedValue(null);
 
     const response = await request(app)
-      .put(`/v1/list/updatePrivacy/${mockListId}`)
+      .put(`/v1/list/update/${mockListId}`)
       .set("Authorization", `Bearer ${mockUserId}`)
-      .send({ privacy: updatedPrivacy });
+      .query({ updateType: "privacy" })
+      .send({ privacy: updatedPrivacy, name: updatedName });
 
     expect(response.status).toBe(500);
-    expect(response.body.message).toBe("Unable to update list privacy");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
-    expect(updateListPrivacy).toHaveBeenCalledWith(
-      new mongoose.Types.ObjectId(mockListId),
-      updatedPrivacy
-    );
+    expect(response.body.message).toBe("Unable to update list");
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
+    expect(updateListDetails).toHaveBeenCalledWith({
+      listId: new mongoose.Types.ObjectId(mockListId),
+      updates: {
+        privacy: updatedPrivacy,
+        name: updatedName,
+      },
+    });
   });
 
   it("should handle unexpected errors", async () => {
-    (getAllLists as Mock).mockRejectedValue(new Error("Unexpected error"));
+    (getUserLists as Mock).mockRejectedValue(new Error("Unexpected error"));
 
     const updatedPrivacy = "private";
+    const updatedName = "Updated List Name";
     const response = await request(app)
-      .put(`/v1/list/updatePrivacy/${mockListId}`)
+      .put(`/v1/list/update/${mockListId}`)
       .set("Authorization", `Bearer ${mockUserId}`)
-      .send({ privacy: updatedPrivacy });
+      .query({ updateType: "privacy" })
+      .send({ privacy: updatedPrivacy, name: updatedName });
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe("Unexpected error");
-    expect(getAllLists).toHaveBeenCalledWith(mockUserId);
+    expect(getUserLists).toHaveBeenCalledWith(mockUserId);
   });
 });

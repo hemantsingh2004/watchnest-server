@@ -4,14 +4,19 @@ import {
   createList,
   deleteList,
   getList,
-  updateListPrivacy,
+  updateListDetails,
 } from "../models/list/user-list/list.model";
 import mongoose, { Error } from "mongoose";
-import { addList, getAllLists, removeList } from "../models/user/user.model";
+import {
+  addListToUser,
+  getUserLists,
+  removeListFromUser,
+} from "../models/user/userList.model";
 import userAuthorization from "../middlewares/authorization/userAuthorization.middleware";
 import {
   commonListValidation,
   createlistValidation,
+  updateListValidation,
 } from "../middlewares/validation/listValidation.middleware";
 
 const router = express.Router();
@@ -21,6 +26,7 @@ router.all("/", (req: Request, res: Response, next: NextFunction) => {
 });
 
 router.post(
+  // Create new list
   "/",
   userAuthorization,
   createlistValidation,
@@ -30,7 +36,7 @@ router.post(
       const result = (await createList(listObj)) as mongoose.Document;
       if (result && result._id) {
         const userId = new mongoose.Types.ObjectId(req.userId);
-        const updateUser = await addList(
+        const updateUser = await addListToUser(
           userId,
           result._id as mongoose.Types.ObjectId,
           listObj.type
@@ -58,6 +64,7 @@ interface IUserList {
 }
 
 router.get(
+  // Returns a list if it belongs to user
   "/:listId",
   userAuthorization,
   commonListValidation,
@@ -66,7 +73,7 @@ router.get(
     const type = req.query.type as string;
     try {
       const userId = new mongoose.Types.ObjectId(req.userId);
-      const userLists = (await getAllLists(userId)) as IUserList;
+      const userLists = (await getUserLists(userId)) as IUserList;
       if (!userLists) {
         return next(new Error("Unable to retrieve user lists"));
       }
@@ -99,7 +106,11 @@ router.get(
     } catch (error: any) {
       if (error.message === "List not found") {
         const userId = new mongoose.Types.ObjectId(req.userId);
-        await removeList(userId, new mongoose.Types.ObjectId(listId), type);
+        await removeListFromUser(
+          userId,
+          new mongoose.Types.ObjectId(listId),
+          type
+        );
       }
       next(error);
     }
@@ -107,6 +118,7 @@ router.get(
 );
 
 router.delete(
+  //Delete a list if it belongs to user
   "/:listId",
   userAuthorization,
   commonListValidation,
@@ -116,7 +128,7 @@ router.delete(
 
     try {
       const userId = new mongoose.Types.ObjectId(req.userId);
-      const userLists = (await getAllLists(userId)) as IUserList;
+      const userLists = (await getUserLists(userId)) as IUserList;
 
       if (!userLists) {
         return next(new Error("Unable to retrieve user lists"));
@@ -140,7 +152,7 @@ router.delete(
 
       const result = await deleteList(new mongoose.Types.ObjectId(listId));
       if (result === true) {
-        const updateUser = await removeList(
+        const updateUser = await removeListFromUser(
           userId,
           new mongoose.Types.ObjectId(listId),
           type
@@ -160,22 +172,24 @@ router.delete(
 );
 
 router.put(
-  "/updatePrivacy/:listId",
+  //Update List Details like name, privacy
+  "/update/:listId",
+  userAuthorization,
+  updateListValidation,
   async (req: Request, res: Response, next: NextFunction) => {
     const listId = req.params.listId;
-    const { privacy } = req.body;
-    if (!listId || !privacy) {
-      const err = Object.assign(new Error("details not found"), {
-        status: 400,
-      });
-      return next(err);
-    }
+    const { privacy, name } = req.body;
     try {
       const userId = new mongoose.Types.ObjectId(req.userId);
-      const userLists = (await getAllLists(userId)) as IUserList;
+      const userLists = (await getUserLists(userId)) as IUserList;
       if (!userLists) {
-        return next(new Error("Unable to retrieve lists"));
+        const err = Object.assign(new Error("Unable to retrieve lists"), {
+          status: 400,
+        });
+        return next(err);
       }
+      console.log("some info in router: ", listId, userLists, userId);
+
       if (
         userLists.statusBased &&
         !userLists.statusBased.some((id) =>
@@ -186,22 +200,28 @@ router.put(
           id.equals(new mongoose.Types.ObjectId(listId))
         )
       ) {
+        console.log("in the router lists don't match");
+
         const err = Object.assign(
           new Error("List does not exist in user lists"),
           { status: 400 }
         );
         return next(err);
       }
-      const result = (await updateListPrivacy(
-        new mongoose.Types.ObjectId(listId),
-        privacy
-      )) as mongoose.Document;
+      const result = (await updateListDetails({
+        listId: new mongoose.Types.ObjectId(listId),
+        updates: {
+          ...(privacy && { privacy }),
+          ...(name && { name }),
+        },
+      })) as mongoose.Document;
+      console.log("result achieved in list router is : ", result);
       if (result && result._id) {
         res
           .status(200)
           .json({ message: "List privacy updated successfully", result });
       } else {
-        return next(new Error("Unable to update list privacy"));
+        return next(new Error("Unable to update list"));
       }
     } catch (error) {
       next(error);
