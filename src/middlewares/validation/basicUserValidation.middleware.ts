@@ -109,4 +109,38 @@ const updatePasswordValidation = (
   }
 };
 
-export { searchUserValidation, updateUserValidation, updatePasswordValidation };
+const tagHandlingValidation = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const schema = joi.object({
+    tag: joi.string().required(),
+    queryType: joi.string().valid("add", "remove").required(),
+  });
+  const { error } = schema.validate(
+    {
+      tag: req.body.tag,
+      queryType: req.query.queryType,
+    },
+    { abortEarly: false }
+  );
+  if (error) {
+    const err = Object.assign(
+      new Error(
+        `Validation failed: ${error.details.map((x) => x.message).join(", ")}`
+      ),
+      { status: 400 }
+    );
+    return next(err);
+  } else {
+    next();
+  }
+};
+
+export {
+  searchUserValidation,
+  updateUserValidation,
+  updatePasswordValidation,
+  tagHandlingValidation,
+};

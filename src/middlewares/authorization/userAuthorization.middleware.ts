@@ -6,7 +6,7 @@ const userAuthorization = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+) => {
   const token = req.header("Authorization")?.replace("Bearer ", "") as string;
 
   if (!token) {

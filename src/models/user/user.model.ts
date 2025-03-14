@@ -110,10 +110,7 @@ const deleteUser = (userId: mongoose.Types.ObjectId, password: string) => {
           if (result) resolve(result);
           else reject(new Error("Unable to delete user"));
         } else {
-          const err = Object.assign(new Error("Password is incorrect"), {
-            status: 400,
-          });
-          reject(err);
+          reject(new Error("Password is incorrect"));
         }
       } else {
         reject(new Error("User not found"));
@@ -135,7 +132,7 @@ interface updateUserDetails {
 }
 
 const updateUser = ({ userId, updates }: updateUserDetails) => {
-  return new Promise(async (reject, resolve) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const updateFields: Record<string, any> = {};
       if (updates.name) updateFields["name"] = updates.name;
@@ -180,10 +177,7 @@ const updatePassword = (
             reject(new Error("Unable to update password"));
           }
         } else {
-          const err = Object.assign(new Error("Old password is incorrect"), {
-            status: 400,
-          });
-          reject(err);
+          reject(new Error("Old password is incorrect"));
         }
       } else {
         reject(new Error("Unable to update password"));
@@ -194,56 +188,6 @@ const updatePassword = (
   });
 };
 
-const handleTag = (
-  userId: mongoose.Types.ObjectId,
-  tag: string,
-  queryType: "find" | "add" | "remove"
-) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      let result;
-
-      switch (queryType) {
-        case "find":
-          result = await userModel.find({ _id: userId, tags: tag });
-          if (!result || result.length === 0) {
-            return reject(new Error("Unable to find tag"));
-          }
-          break;
-        case "add":
-          result = await userModel.findOneAndUpdate(
-            { _id: userId },
-            { $push: { tags: tag } },
-            { new: true }
-          );
-          if (!result) {
-            return reject(new Error("Unable to add tag"));
-          }
-          break;
-        case "remove":
-          result = await userModel.findOneAndUpdate(
-            { _id: userId },
-            { $pull: { tags: tag } },
-            { new: true }
-          );
-          if (!result) {
-            return reject(new Error("Unable to remove tag"));
-          }
-          break;
-        default:
-          return reject(new Error("Invalid query type"));
-      }
-
-      resolve(result);
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-
-// todo : remove and add friends as well
-// todo : remove and add collaborative lists
-
 export {
   createUser,
   loginUser,
@@ -252,6 +196,5 @@ export {
   updateUser,
   updatePassword,
   deleteUser,
-  handleTag,
 };
 export type { ILoginUser };
