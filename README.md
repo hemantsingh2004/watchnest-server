@@ -219,7 +219,7 @@ _Note: With properly designed schemas (e.g., storing common media references and
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/yourusername/watchnest-backend.git
+   git clone https://github.com/singhemant2004/watchnest-server
    cd watchnest-backend
 
    ```
@@ -260,12 +260,6 @@ Commit your changes (git commit -m 'Add some feature').
 Push to the branch (git push origin feature/YourFeature).
 Open a pull request.
 Ensure your code adheres to our style guidelines and that all tests pass before submitting a pull request.
-
----
-
-## License
-
-This project is licensed under the MIT License.
 
 ---
 
